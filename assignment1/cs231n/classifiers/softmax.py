@@ -1,6 +1,8 @@
 from builtins import range
 import numpy as np
 from random import shuffle
+
+import torch
 from past.builtins import xrange
 
 
@@ -34,7 +36,22 @@ def softmax_loss_naive(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    n = X.shape[0]
+    c = W.shape[1]
+    for i in range(n):
+        score = X[i] @ W
+        expScore = np.exp(score).reshape(-1)
+        sumScore = np.sum(expScore)
+        loss += -np.log(expScore[y[i]]/sumScore)
+        for j in range(c):
+            dW[:, j] += expScore[j] / sumScore * X[i]
+            if j == y[i]:
+                dW[:, j] -= X[i]
+    loss /= n
+    loss += reg * np.sum(W * W)
+
+    dW /= n
+    dW += 2 * reg * W
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
@@ -59,7 +76,19 @@ def softmax_loss_vectorized(W, X, y, reg):
     #############################################################################
     # *****START OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
-    pass
+    n = X.shape[0]
+    c = W.shape[1]
+    expScore = np.exp(X @ W)
+    sumScore = np.sum(expScore, axis=1)
+    loss = np.sum(-np.log(expScore[range(n), y] / sumScore)) / n
+    loss += reg * np.sum(W * W)
+
+    tmp = expScore / sumScore[:, np.newaxis]
+    tmp[range(n), y] -= 1
+    dW = X.T @ tmp
+    dW /= n
+    dW += reg * W
+
 
     # *****END OF YOUR CODE (DO NOT DELETE/MODIFY THIS LINE)*****
 
